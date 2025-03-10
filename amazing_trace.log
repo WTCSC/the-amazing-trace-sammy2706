@@ -1,0 +1,6 @@
+DEBUG:root:Error running traceroute: Command '['traceroute', '-I', 'google.com']' returned non-zero exit status 1.
+DEBUG:root:Error running traceroute: Command '['traceroute', '-I', 'google.com']' returned non-zero exit status 1.
+DEBUG:root:Error running traceroute: Command '['traceroute', '-I', 'google.com']' returned non-zero exit status 1.
+DEBUG:root:Error running traceroute: Command '['traceroute', '-I', 'google.com']' returned non-zero exit status 1.
+DEBUG:root:Error running traceroute: Command '['traceroute', '-I', 'google.com']' returned non-zero exit status 1.
+DEBUG:root:Error running traceroute: Command '['traceroute', '-I', 'google.com']' returned non-zero exit status 1.
