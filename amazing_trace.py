@@ -4,6 +4,12 @@ import numpy as np
 from matplotlib.ticker import MaxNLocator
 import time
 import os
+import subprocess
+import re
+import logging
+
+
+logging.basicConfig(filename='amazing_trace.log', encoding='utf-8', level=logging.DEBUG)
 
 def execute_traceroute(destination):
     """
@@ -15,13 +21,15 @@ def execute_traceroute(destination):
     Returns:
         str: The raw output from the traceroute command
     """
-    # Your code here
-    # Hint: Use the subprocess module to run the traceroute command
-    # Make sure to handle potential errors
-
-    # Remove this line once you implement the function,
-    # and don't forget to *return* the output
-    pass
+    try:
+        # Run the traceroute command and capture the output
+        result = subprocess.run(['traceroute', '-I', destination], capture_output=True,)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        # If an error occurs, log it and return an empty string
+        logging.debug(f"Error running traceroute: {e}")
+        return ""
+    
 
 def parse_traceroute(traceroute_output):
     """
@@ -61,13 +69,70 @@ def parse_traceroute(traceroute_output):
         ]
     ```
     """
-    # Your code here
-    # Hint: Use regular expressions to extract the relevant information
-    # Handle timeouts (asterisks) appropriately
+    # Split the output into lines and process each line
+    result = []
+    lines = traceroute_output.strip().splitlines()
+    if not lines:
+        return result
+    # Skip the first line (header) and process the rest
+    for line in lines[1:]:
+        if not line.strip():
+            continue
+        tokens = line.split()
+        try:
+            hop = int(tokens[0])
+        except ValueError:
+            continue  
+    # Extract the IP address, hostname, and round-trip times (RTTs)
+        rtts = []
+        for i, token in enumerate(tokens):
+            if token == "ms" and i > 0:
+                val = tokens[i-1]
+                if val == "*":
+                    rtts.append(None)
+                else:
+                    cleaned = re.sub(r'[^0-9.]', '', val)
+                    try:
+                        rtts.append(float(cleaned))
+                    except ValueError:
+                        rtts.append(None)
+        while len(rtts) < 3:
+            rtts.append(None)
+        rtts = rtts[:3]
+        # Extract the IP address and hostname
+        id_end = tokens.index("ms") - 1 if "ms" in tokens else len(tokens)
+        id_tokens = tokens[1:id_end] if id_end > 1 else tokens[1:]
+    
+        ip = None
+        hostname = None
+        for j, token in enumerate(id_tokens):
+            candidate = token.strip("()")
+            if re.match(r'\d{1,3}(?:\.\d{1,3}){3}', candidate):
+                ip = candidate
+                if j > 0:
+                    prev = id_tokens[j-1].strip("()")
+                    if not re.match(r'\d{1,3}(?:\.\d{1,3}){3}', prev):
+                        hostname = id_tokens[j-1]
+                break
 
-    # Remove this line once you implement the function,
-    # and don't forget to *return* the output
-    pass
+        if ip is None:
+            if "*" in tokens:
+                ip = None
+                hostname = None
+
+        if hostname is not None and ip is not None:
+            if hostname.strip("()") == ip:
+                hostname = None
+
+        result.append({
+            'hop': hop,
+            'ip': ip,
+            'hostname': hostname,
+            'rtt': rtts
+        })
+
+    return result
+
 
 # ============================================================================ #
 #                    DO NOT MODIFY THE CODE BELOW THIS LINE                    #
